@@ -1,26 +1,33 @@
-import numpy as np
 import numba
+import numpy as np
+from math import sqrt
 from hausdorff import hausdorff_distance
 
 # two random 2D arrays (second dimension must match)
 np.random.seed(0)
-X = np.random.random((1000, 100))
-Y = np.random.random((5000, 100))
+X = np.random.random((1000,100))
+Y = np.random.random((5000,100))
 
-# Test computation of Hausdorff distance with different base distances
-print(f"Hausdorff distance test: {hausdorff_distance(X, Y, distance='manhattan')}")
-print(f"Hausdorff distance test: {hausdorff_distance(X, Y, distance='euclidean')}")
-print(f"Hausdorff distance test: {hausdorff_distance(X, Y, distance='chebyshev')}")
-print(f"Hausdorff distance test: {hausdorff_distance(X, Y, distance='cosine')}")
+# write your own crazy custom function here
+# this function should take two 1-dimensional arrays as input
+# and return a single float value as output.
+@numba.jit(nopython=True, fastmath=True)
+def custom_dist(array_x, array_y):
+    n = array_x.shape[0]
+    ret = 0.
+    for i in range(n):
+        ret += (array_x[i]-array_y[i])**2
+    return sqrt(ret)
 
+print(f"Hausdorff custom euclidean test: {hausdorff_distance(X, Y, distance=custom_dist)}")
 
-# For haversine, use 2D lat, lng coordinates
-def rand_lat_lng(N):
-    lats = np.random.uniform(-90, 90, N)
-    lngs = np.random.uniform(-180, 180, N)
-    return np.stack([lats, lngs], axis=-1)
+# a real crazy custom function
+@numba.jit(nopython=True, fastmath=True)
+def custom_dist(array_x, array_y):
+    n = array_x.shape[0]
+    ret = 0.
+    for i in range(n):
+        ret += (array_x[i]-array_y[i])**3 / (array_x[i]**2 + array_y[i]**2 + 0.1)
+    return ret
 
-
-X = rand_lat_lng(100)
-Y = rand_lat_lng(250)
-print("Hausdorff haversine test: {0}".format(hausdorff_distance(X, Y, distance="haversine")))
+print(f"Hausdorff custom crazy test: {hausdorff_distance(X, Y, distance=custom_dist)}")
